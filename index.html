@@ -169,6 +169,11 @@
   .code-ran-pill .pill-text{font-size:11.5px;color:var(--text-secondary);font-weight:500}
   .code-ran-pill .pill-arrow{font-size:9px;color:var(--text-muted)}
 
+  /* HORIZEN ADDRESS DISPLAY */
+  #hz-addr-display{position:fixed;bottom:15px;left:15px;background:rgba(10,10,15,0.85);border:1px solid #333;border-radius:8px;padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#666;z-index:9999;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:8px}
+  #hz-addr-display:hover{color:var(--accent);border-color:var(--accent);background:rgba(10,10,15,0.95)}
+  #hz-addr-display i{font-size:10px}
+
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -286,18 +291,23 @@
   </main>
 </div>
 
+<!-- HORIZEN ADDRESS DISPLAY -->
+<div id="hz-addr-display" onclick="copyAddress()" title="Click to copy">
+  <i class="fas fa-fingerprint"></i>
+  <span id="hz-addr-text">Loading...</span>
+</div>
+
 <script>
 const SUPABASE_URL = 'https://xlisbmtenekjmundxbcn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Cvs-AiKPTHrC_tfGfwlpSQ_4Hir5Cva';
 const TABLE_NAME = 'api_keys';
 
-// Fallback hierarchy if one goes down
 const MODEL_FALLBACKS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it'];
 
 let supabaseClient = null;
 let groqApiKey = '';
 let pexelsApiKey = '';
-let currentModelSetting = 'auto'; // 'auto' or specific model
+let currentModelSetting = 'auto';
 let isStreaming = false;
 let chats = {};
 let activeChatId = null;
@@ -306,11 +316,66 @@ let isFullscreen = false;
 let isSidebarHidden = false;
 let browserOpen = false;
 let runnerOpen = false;
+let myAddress = "";
+
+// ==========================================
+// HORIZEN BLOCKER SYSTEM
+// ==========================================
+async function initHorizenBlocker() {
+    let address = localStorage.getItem('horizen_address');
+    
+    // If they don't have an address (didn't visit main OS), generate one
+    if (!address) {
+        const digits = Math.floor(100000 + Math.random() * 900000);
+        address = `horizen.play://${digits}`;
+        localStorage.setItem('horizen_address', address);
+        
+        // Save to Supabase
+        await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+            method: 'POST',
+            headers: { 
+                'apikey': SUPABASE_KEY, 
+                'Content-Type': 'application/json', 
+                'Prefer': 'return=minimal' 
+            },
+            body: JSON.stringify({ address: address, nickname: 'Unknown', is_blocked: false })
+        });
+    }
+
+    myAddress = address;
+    document.getElementById('hz-addr-text').innerText = address;
+
+    // Check if blocked
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/users?address=eq.${encodeURIComponent(address)}&select=is_blocked`, {
+            headers: { 'apikey': SUPABASE_KEY }
+        });
+        const data = await res.json();
+        
+        if (data.length > 0 && data[0].is_blocked === true) {
+            window.location.href = 'https://blocked.horizensearch.com';
+            return false; 
+        }
+    } catch (e) {}
+    return true;
+}
+
+function copyAddress() {
+    navigator.clipboard.writeText(myAddress).then(() => {
+        const el = document.getElementById('hz-addr-text');
+        el.innerText = "Copied!";
+        setTimeout(() => { el.innerText = myAddress; }, 1500);
+    });
+}
 
 async function boot() {
   const fill = document.getElementById('loaderFill');
   const text = document.getElementById('loaderText');
   try {
+    fill.style.width = '10%'; text.textContent = 'Checking access...';
+    const isAllowed = await initHorizenBlocker();
+    if (!isAllowed) return;
+
     fill.style.width = '20%'; text.textContent = 'Initializing Supabase...';
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     await sleep(300);
@@ -344,12 +409,7 @@ async function boot() {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-function switchModel(m) { 
-  currentModelSetting = m; 
-  if(m === 'auto') showToast('Auto-Fallback Enabled', 'success');
-  else showToast('Model: ' + m, 'success'); 
-}
-
+function switchModel(m) { currentModelSetting = m; if(m === 'auto') showToast('Auto-Fallback Enabled', 'success'); else showToast('Model: ' + m, 'success'); }
 function toggleBrowser() { if (runnerOpen) closeRunner(); browserOpen = !browserOpen; document.getElementById('browserPanel').classList.toggle('open', browserOpen); document.getElementById('browserBtn').classList.toggle('active', browserOpen); }
 function closeBrowser() { browserOpen = false; document.getElementById('browserPanel').classList.remove('open'); document.getElementById('browserBtn').classList.remove('active'); }
 function openRunner() { if (browserOpen) closeBrowser(); runnerOpen = true; document.getElementById('runnerPanel').classList.add('open'); document.getElementById('codeRanPill').style.display = 'none'; }
@@ -401,79 +461,32 @@ async function sendMessage() {
     const history = chat.messages.slice(0, -1).slice(-20).map(m => ({ role: m.role, content: m.content }));
     const sys = `You are HorizenAI... (Rules same as before)`;
     
-    // DETERMINE WHICH MODELS TO TRY
     let modelsToTry = MODEL_FALLBACKS;
-    if (currentModelSetting !== 'auto') {
-      modelsToTry = [currentModelSetting, ...MODEL_FALLBACKS.filter(m => m !== currentModelSetting)];
-    }
+    if (currentModelSetting !== 'auto') { modelsToTry = [currentModelSetting, ...MODEL_FALLBACKS.filter(m => m !== currentModelSetting)]; }
 
     let success = false;
     for (let i = 0; i < modelsToTry.length; i++) {
       const model = modelsToTry[i];
       try {
         document.getElementById('activeModelLabel').innerText = `Trying ${model}...`;
-        
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', { 
-          method: 'POST', 
-          headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, 
-          body: JSON.stringify({ 
-            model: model, 
-            messages: [{ role: 'system', content: sys }, ...history, { role: 'user', content: text }], 
-            stream: true, temperature: 0.7, max_tokens: 4096 
-          }) 
-        });
-        
-        if (!res.ok) {
-          // If it's a 429 (rate limit) or 5xx (server error), try next model
-          if (res.status === 429 || res.status >= 500) {
-            showToast(`${model} down/limited. Switching...`, 'warning');
-            continue; 
-          }
-          const e = await res.json().catch(() => ({})); 
-          throw new Error(e.error?.message || `API ${res.status}`);
-        }
-
-        // SUCCESS! Stream the response
-        document.getElementById('activeModelLabel').innerText = model.split('-')[0]; // Clean up label
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: model, messages: [{ role: 'system', content: sys }, ...history, { role: 'user', content: text }], stream: true, temperature: 0.7, max_tokens: 4096 }) });
+        if (!res.ok) { if (res.status === 429 || res.status >= 500) { showToast(`${model} down/limited. Switching...`, 'warning'); continue; } const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `API ${res.status}`); }
+        document.getElementById('activeModelLabel').innerText = model.split('-')[0];
         const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '', full = '';
-        while (true) { 
-          const { done, value } = await reader.read(); 
-          if (done) break; 
-          buf += dec.decode(value, { stream: true }); 
-          const lines = buf.split('\n'); 
-          buf = lines.pop() || ''; 
-          for (const line of lines) { 
-            const t = line.trim(); 
-            if (!t || !t.startsWith('data: ')) continue; 
-            const d = t.slice(6); 
-            if (d === '[DONE]') continue; 
-            try { const j = JSON.parse(d); const delta = j.choices?.[0]?.delta?.content; if (delta) { full += delta; aMsg.content = full; updateStreamingMessage(aMsg); } } catch (e) { } 
-          } 
-        }
-        
-        success = true;
-        break; // Exit loop, we got the response!
-      } catch (err) {
-        if (i === modelsToTry.length - 1) throw err; // If it's the last model, throw real error
-      }
+        while (true) { const { done, value } = await reader.read(); if (done) break; buf += dec.decode(value, { stream: true }); const lines = buf.split('\n'); buf = lines.pop() || ''; for (const line of lines) { const t = line.trim(); if (!t || !t.startsWith('data: ')) continue; const d = t.slice(6); if (d === '[DONE]') continue; try { const j = JSON.parse(d); const delta = j.choices?.[0]?.delta?.content; if (delta) { full += delta; aMsg.content = full; updateStreamingMessage(aMsg); } } catch (e) { } } }
+        success = true; break;
+      } catch (err) { if (i === modelsToTry.length - 1) throw err; }
     }
-
     if (!success) throw new Error("All AI models failed.");
-
     aMsg.streaming = false;
     const pm = full.match(/\[SEARCH_PEXELS:\s*(.+?)\]/g);
     if (pm) { aMsg.content = full.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/g, '').trim(); for (const m of pm) { const q = m.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/, '$1'); if (pexelsApiKey) { const imgs = await searchPexels(q); if (imgs.length) { aMsg.images = aMsg.images || []; aMsg.images.push(...imgs); } } } }
     if (document.getElementById('autoRunToggle').checked) await autoRunDetectedCode(aMsg);
     renderMessages();
-  } catch (err) { 
-    aMsg.streaming = false; aMsg.content = `**Error:** ${err.message}`; 
-    document.getElementById('activeModelLabel').innerText = "Online"; 
-    renderMessages(); showToast(err.message, 'error'); 
-  } finally { isStreaming = false; updateSendButton(); }
+  } catch (err) { aMsg.streaming = false; aMsg.content = `**Error:** ${err.message}`; document.getElementById('activeModelLabel').innerText = "Online"; renderMessages(); showToast(err.message, 'error'); } finally { isStreaming = false; updateSendButton(); }
 }
 
 function updateStreamingMessage(msg) { const c = document.getElementById('messagesContainer'); const all = c.querySelectorAll('.msg.assistant'); const last = all[all.length - 1]; if (!last) return; const b = last.querySelector('.msg-bubble'); if (!b) return; b.innerHTML = `<span class="streaming-cursor">${renderMarkdown(msg.content)}</span>`; b.querySelectorAll('pre code').forEach(bl => { if (!bl.classList.contains('hljs')) hljs.highlightElement(bl); }); c.scrollTop = c.scrollHeight; }
-
 async function autoRunDetectedCode(msg) { const blocks = extractCodeBlocks(msg.content); const htmlBlock = blocks.find(b => b.lang === 'html'); const jsBlock = blocks.find(b => ['javascript', 'js'].includes(b.lang)); if (htmlBlock) { document.getElementById('runnerCode').value = htmlBlock.code; document.getElementById('runnerLang').value = 'html'; await runCode(true); showCodeRanPill(); } else if (jsBlock && jsBlock.code.length > 50) { document.getElementById('runnerCode').value = jsBlock.code; document.getElementById('runnerLang').value = 'javascript'; await runCode(true); showCodeRanPill(); } }
 function extractCodeBlocks(text) { const b = []; const r = /```(\w+)?\n([\s\S]*?)```/g; let m; while ((m = r.exec(text)) !== null) b.push({ lang: (m[1] || '').toLowerCase(), code: m[2].trim() }); return b; }
 async function searchPexels(q) { try { const r = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&per_page=6&orientation=landscape`, { headers: { 'Authorization': pexelsApiKey } }); if (!r.ok) throw 0; const d = await r.json(); return (d.photos || []).map(p => ({ src: { large: p.src.large, medium: p.src.medium, small: p.src.small }, alt: p.alt || q, photographer: p.photographer })); } catch (e) { showToast('Image search failed', 'error'); return []; } }
@@ -484,16 +497,13 @@ function runCode(silent) {
   else if (lang === 'javascript') { const logs = []; const orig = { log: console.log, error: console.error, warn: console.warn }; console.log = (...a) => { logs.push({ t: 'log', s: a.map(fmt).join(' ') }); orig.log.apply(console, a); }; console.error = (...a) => { logs.push({ t: 'error', s: a.map(fmt).join(' ') }); orig.error.apply(console, a); }; console.warn = (...a) => { logs.push({ t: 'log', s: a.map(fmt).join(' ') }); orig.warn.apply(console, a); }; try { const r = new Function(code)(); if (r !== undefined) logs.push({ t: 'success', s: '→ ' + fmt(r) }); } catch (e) { logs.push({ t: 'error', s: e.toString() }); } Object.assign(console, orig); if (!logs.length) appendOutput('Executed (no output)', 'log'); else logs.forEach(l => appendOutput(l.s, l.t === 'error' ? 'error' : 'log')); appendOutput('--- Done ---', 'success'); }
   else if (lang === 'css') { const iframe = document.getElementById('browserIframe'); const cur = iframe.srcdoc || ''; const w = cur ? cur.replace('</head>', `<style>${code}</style></head>`) : `<!DOCTYPE html><html><head><style>${code}</style></head><body><div style="padding:40px;font-family:sans-serif;"><h1>CSS Preview</h1><p>Text with <strong>bold</strong> and <em>italic</em>.</p><button>Button</button><div style="width:100px;height:100px;margin:20px 0;background:coral;border-radius:8px;"></div></div></body></html>`; iframe.srcdoc = w; if (!browserOpen) toggleBrowser(); if (!silent) appendOutput('CSS applied in Browser', 'success'); }
 }
-
 function fmt(a) { if (a === null) return 'null'; if (a === undefined) return 'undefined'; if (typeof a === 'object') { try { return JSON.stringify(a, null, 2); } catch { return String(a); } } return String(a); }
 function appendOutput(t, type) { const o = document.getElementById('runnerOutput'); const l = document.createElement('div'); l.className = type === 'error' ? 'error-line' : type === 'success' ? 'success-line' : 'log-line'; l.textContent = t; o.appendChild(l); o.scrollTop = o.scrollHeight; }
 function clearRunner() { document.getElementById('runnerCode').value = ''; document.getElementById('runnerOutput').innerHTML = '<div class="log-line" style="color:var(--text-muted);">// Ready.</div>'; }
-
 function navigateBrowser(u) { if (!u) return; if (!u.startsWith('http://') && !u.startsWith('https://') && u !== 'about:srcdoc') u = 'https://' + u; document.getElementById('browserUrl').value = u; if (u !== 'about:srcdoc') document.getElementById('browserIframe').src = u; }
 function browserBack() { try { document.getElementById('browserIframe').contentWindow.history.back(); } catch (e) { } }
 function browserForward() { try { document.getElementById('browserIframe').contentWindow.history.forward(); } catch (e) { } }
 function browserReload() { const f = document.getElementById('browserIframe'); if (f.srcdoc) f.srcdoc = f.srcdoc; else try { f.contentWindow.location.reload(); } catch (e) { f.src = f.src; } }
-
 function handleInputKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 110) + 'px'; }
 function updateSendButton() { const b = document.getElementById('sendBtn'); if (isStreaming) { b.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div>'; b.disabled = true; } else { b.innerHTML = '<i class="fas fa-arrow-up"></i>'; b.disabled = false; } }
