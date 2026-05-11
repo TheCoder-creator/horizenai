@@ -169,7 +169,6 @@
   .code-ran-pill .pill-text{font-size:11.5px;color:var(--text-secondary);font-weight:500}
   .code-ran-pill .pill-arrow{font-size:9px;color:var(--text-muted)}
 
-  /* HORIZEN ADDRESS DISPLAY */
   #hz-addr-display{position:fixed;bottom:15px;left:15px;background:rgba(10,10,15,0.85);border:1px solid #333;border-radius:8px;padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#666;z-index:9999;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:8px}
   #hz-addr-display:hover{color:var(--accent);border-color:var(--accent);background:rgba(10,10,15,0.95)}
   #hz-addr-display i{font-size:10px}
@@ -266,7 +265,7 @@
         <select class="runner-lang-select" id="runnerLang"><option value="html">HTML</option><option value="javascript">JavaScript</option><option value="css">CSS</option></select>
         <div class="runner-actions">
           <button class="runner-btn clear" onclick="clearRunner()">Clear</button>
-          <button class="runner-btn run" onclick="runCode()"><i class="fas fa-play" style="margin-right:2px;font-size:8px;"></i> Run</button>
+          <button class="runner-btn run" onclick="runCode(false)"><i class="fas fa-play" style="margin-right:2px;font-size:8px;"></i> Run</button>
         </div>
       </div>
       <div class="slide-panel-body" style="overflow:hidden;">
@@ -291,7 +290,6 @@
   </main>
 </div>
 
-<!-- HORIZEN ADDRESS DISPLAY -->
 <div id="hz-addr-display" onclick="copyAddress()" title="Click to copy">
   <i class="fas fa-fingerprint"></i>
   <span id="hz-addr-text">Loading...</span>
@@ -319,35 +317,44 @@ let runnerOpen = false;
 let myAddress = "";
 
 // ==========================================
-// HORIZEN BLOCKER SYSTEM
+// HORIZEN FINGERPRINT BLOCKER SYSTEM
 // ==========================================
-async function initHorizenBlocker() {
-    let address = localStorage.getItem('horizen_address');
+async function generateFingerprint() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('HorizonFP', 2, 2);
     
-    // If they don't have an address (didn't visit main OS), generate one
-    if (!address) {
-        const digits = Math.floor(100000 + Math.random() * 900000);
-        address = `horizen.play://${digits}`;
-        localStorage.setItem('horizen_address', address);
-        
-        // Save to Supabase
-        await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-            method: 'POST',
-            headers: { 
-                'apikey': SUPABASE_KEY, 
-                'Content-Type': 'application/json', 
-                'Prefer': 'return=minimal' 
-            },
-            body: JSON.stringify({ address: address, nickname: 'Unknown', is_blocked: false })
-        });
+    const raw = canvas.toDataURL() + 
+        navigator.hardwareConcurrency + 
+        screen.width + screen.height + 
+        screen.colorDepth + 
+        new Date().getTimezoneOffset() + 
+        navigator.language;
+
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+        const char = raw.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    
+    return `hz-pc-${Math.abs(hash).toString(36).toUpperCase()}`;
+}
+
+async function initHorizenBlocker() {
+    let computerId = localStorage.getItem('horizen_computer_id');
+    if (!computerId) {
+        computerId = await generateFingerprint();
+        localStorage.setItem('horizen_computer_id', computerId);
     }
 
-    myAddress = address;
-    document.getElementById('hz-addr-text').innerText = address;
+    myAddress = computerId;
+    document.getElementById('hz-addr-text').innerText = computerId;
 
-    // Check if blocked
     try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/users?address=eq.${encodeURIComponent(address)}&select=is_blocked`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/users?computer_id=eq.${encodeURIComponent(computerId)}&select=is_blocked`, {
             headers: { 'apikey': SUPABASE_KEY }
         });
         const data = await res.json();
@@ -357,6 +364,22 @@ async function initHorizenBlocker() {
             return false; 
         }
     } catch (e) {}
+
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/users?computer_id=eq.${encodeURIComponent(computerId)}&select=id`, {
+            headers: { 'apikey': SUPABASE_KEY }
+        });
+        const data = await res.json();
+
+        if (data.length === 0) {
+            await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+                body: JSON.stringify({ computer_id: computerId, nickname: 'Unknown', is_blocked: false })
+            });
+        }
+    } catch (e) {}
+
     return true;
 }
 
@@ -449,13 +472,16 @@ function renderMarkdown(text) {
   marked.setOptions({ breaks: true, gfm: true, renderer }); return marked.parse(text);
 }
 
-function runCodeFromBlock(btn) { const w = btn.closest('.code-block-wrapper'); const code = w.querySelector('code').textContent; const lang = w.querySelector('.code-block-header span').textContent.toLowerCase(); document.getElementById('runnerCode').value = code; document.getElementById('runnerLang').value = ['html', 'css'].includes(lang) ? lang : 'javascript'; openRunner(); runCode(); }
+function runCodeFromBlock(btn) { const w = btn.closest('.code-block-wrapper'); const code = w.querySelector('code').textContent; const lang = w.querySelector('.code-block-header span').textContent.toLowerCase(); document.getElementById('runnerCode').value = code; document.getElementById('runnerLang').value = ['html', 'css'].includes(lang) ? lang : 'javascript'; openRunner(); runCode(false); }
 
 async function sendMessage() {
   const input = document.getElementById('userInput'); const text = input.value.trim(); if (!text || isStreaming) return; if (!groqApiKey) { showToast('No Groq key', 'error'); return }
   input.value = ''; autoResize(input); const chat = chats[activeChatId]; chat.messages.push({ role: 'user', content: text });
   if (chat.messages.filter(m => m.role === 'user').length === 1) { chat.title = text.substring(0, 46) + (text.length > 46 ? '...' : ''); renderChatList(); }
   renderMessages(); const aMsg = { role: 'assistant', content: '', streaming: true, images: [] }; chat.messages.push(aMsg); renderMessages(); isStreaming = true; updateSendButton();
+  
+  // FIX: Define 'full' at the top so it doesn't get trapped in the try/catch loop scope
+  let full = '';
   
   try {
     const history = chat.messages.slice(0, -1).slice(-20).map(m => ({ role: m.role, content: m.content }));
@@ -472,15 +498,17 @@ async function sendMessage() {
         const res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: model, messages: [{ role: 'system', content: sys }, ...history, { role: 'user', content: text }], stream: true, temperature: 0.7, max_tokens: 4096 }) });
         if (!res.ok) { if (res.status === 429 || res.status >= 500) { showToast(`${model} down/limited. Switching...`, 'warning'); continue; } const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `API ${res.status}`); }
         document.getElementById('activeModelLabel').innerText = model.split('-')[0];
-        const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '', full = '';
+        const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
         while (true) { const { done, value } = await reader.read(); if (done) break; buf += dec.decode(value, { stream: true }); const lines = buf.split('\n'); buf = lines.pop() || ''; for (const line of lines) { const t = line.trim(); if (!t || !t.startsWith('data: ')) continue; const d = t.slice(6); if (d === '[DONE]') continue; try { const j = JSON.parse(d); const delta = j.choices?.[0]?.delta?.content; if (delta) { full += delta; aMsg.content = full; updateStreamingMessage(aMsg); } } catch (e) { } } }
         success = true; break;
       } catch (err) { if (i === modelsToTry.length - 1) throw err; }
     }
     if (!success) throw new Error("All AI models failed.");
+    
     aMsg.streaming = false;
     const pm = full.match(/\[SEARCH_PEXELS:\s*(.+?)\]/g);
     if (pm) { aMsg.content = full.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/g, '').trim(); for (const m of pm) { const q = m.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/, '$1'); if (pexelsApiKey) { const imgs = await searchPexels(q); if (imgs.length) { aMsg.images = aMsg.images || []; aMsg.images.push(...imgs); } } } }
+    
     if (document.getElementById('autoRunToggle').checked) await autoRunDetectedCode(aMsg);
     renderMessages();
   } catch (err) { aMsg.streaming = false; aMsg.content = `**Error:** ${err.message}`; document.getElementById('activeModelLabel').innerText = "Online"; renderMessages(); showToast(err.message, 'error'); } finally { isStreaming = false; updateSendButton(); }
@@ -504,7 +532,7 @@ function navigateBrowser(u) { if (!u) return; if (!u.startsWith('http://') && !u
 function browserBack() { try { document.getElementById('browserIframe').contentWindow.history.back(); } catch (e) { } }
 function browserForward() { try { document.getElementById('browserIframe').contentWindow.history.forward(); } catch (e) { } }
 function browserReload() { const f = document.getElementById('browserIframe'); if (f.srcdoc) f.srcdoc = f.srcdoc; else try { f.contentWindow.location.reload(); } catch (e) { f.src = f.src; } }
-function handleInputKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function handleInputKey(e) {  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 110) + 'px'; }
 function updateSendButton() { const b = document.getElementById('sendBtn'); if (isStreaming) { b.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div>'; b.disabled = true; } else { b.innerHTML = '<i class="fas fa-arrow-up"></i>'; b.disabled = false; } }
 function showToast(msg, type = 'success') { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = `toast ${type}`; t.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${escapeHtml(msg)}`; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(30px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 3500); }
