@@ -214,6 +214,7 @@
         <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
         <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
         <option value="gemma2-9b-it">Gemma 2 9B</option>
+        <option value="HorizenAPI-708b">HorizenAPI-708b</option>
       </select>
     </div>
     <div class="header-right">
@@ -301,6 +302,7 @@ const SUPABASE_KEY = 'sb_publishable_Cvs-AiKPTHrC_tfGfwlpSQ_4Hir5Cva';
 const TABLE_NAME = 'api_keys';
 
 const MODEL_FALLBACKS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma2-9b-it'];
+const MODEL_ALIASES = { 'HorizenAPI-708b': 'openai/gpt-oss-120b' };
 
 let supabaseClient = null;
 let groqApiKey = '';
@@ -553,7 +555,8 @@ async function sendMessage() {
       const model = modelsToTry[i];
       try {
         document.getElementById('activeModelLabel').innerText = `Trying ${model}...`;
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: model, messages: [{ role: 'system', content: sys }, ...history, { role: 'user', content: text }], stream: true, temperature: 0.7, max_tokens: 4096 }) });
+        const resolvedModel = MODEL_ALIASES[model] || model;
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: resolvedModel, messages: [{ role: 'system', content: sys }, ...history, { role: 'user', content: text }], stream: true, temperature: 0.7, max_tokens: 4096 }) });
         if (!res.ok) { if (res.status === 429 || res.status >= 500) { showToast(`${model} down/limited. Switching...`, 'warning'); continue; } const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `API ${res.status}`); }
         document.getElementById('activeModelLabel').innerText = model.split('-')[0];
         const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
