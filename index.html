@@ -314,33 +314,98 @@ let isFullscreen = false;
 let isSidebarHidden = false;
 let browserOpen = false;
 let runnerOpen = false;
-let myAddress = "";
+let myAddress = '';
 
 // ==========================================
 // HORIZEN FINGERPRINT BLOCKER SYSTEM
 // ==========================================
-async function generateFingerprint() {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillText('HorizonFP', 2, 2);
-    
-    const raw = canvas.toDataURL() + 
-        navigator.hardwareConcurrency + 
-        screen.width + screen.height + 
-        screen.colorDepth + 
-        new Date().getTimezoneOffset() + 
-        navigator.language;
+let hzBlockPollInterval = null;
 
-    let hash = 0;
-    for (let i = 0; i < raw.length; i++) {
-        const char = raw.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
+async function generateFingerprint() {
+    let raw = '';
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('HorizonFP_fingerprint_test', 2, 2);
+        ctx.beginPath();
+        ctx.arc(50, 50, 50, 0, Math.PI * 2, false);
+        ctx.fill();
+        raw += canvas.toDataURL();
+    } catch (e) {}
+    try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+                raw += gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                raw += gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            }
+        }
+    } catch (e) {}
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        raw += audioCtx.sampleRate + audioCtx.destination.maxChannelCount + audioCtx.state;
+        audioCtx.close();
+    } catch (e) {}
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            let deviceCounts = { audioinput: 0, audiooutput: 0, videoinput: 0 };
+            devices.forEach(d => { if (deviceCounts[d.kind] !== undefined) deviceCounts[d.kind]++; });
+            raw += JSON.stringify(deviceCounts);
+        }
+    } catch (e) {}
+    raw += navigator.hardwareConcurrency || 'na';
+    raw += screen.width + 'x' + screen.height;
+    raw += screen.colorDepth;
+    raw += (navigator.deviceMemory || 'na');
+    raw += (navigator.platform || 'na');
+    raw += new Date().getTimezoneOffset();
+    raw += navigator.language;
+    raw += Intl.DateTimeFormat().resolvedOptions().timeZone;
+    raw += (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    try {
+        if (navigator.userAgentData) {
+            const hints = await navigator.userAgentData.getHighEntropyValues([
+                'platform', 'platformVersion', 'architecture', 'model', 'bitness', 'fullVersionList'
+            ]);
+            raw += JSON.stringify(hints);
+        } else {
+            raw += navigator.userAgent;
+        }
+    } catch (e) {
+        raw += navigator.userAgent;
     }
-    
-    return `hz-pc-${Math.abs(hash).toString(36).toUpperCase()}`;
+    let hash1 = 0x811c9dc5;
+    for (let i = 0; i < raw.length; i++) {
+        hash1 ^= raw.charCodeAt(i);
+        hash1 = Math.imul(hash1, 0x01000193);
+    }
+    let hash2 = 0x811c9dc5;
+    const reversedRaw = raw.split('').reverse().join('');
+    for (let i = 0; i < reversedRaw.length; i++) {
+        hash2 ^= reversedRaw.charCodeAt(i);
+        hash2 = Math.imul(hash2, 0x01000193);
+    }
+    const combinedHash = (hash1 >>> 0).toString(16) + (hash2 >>> 0).toString(16);
+    return `hz-pc-${combinedHash.toUpperCase().substring(0, 16)}`;
+}
+
+async function hzCheckIfBlocked(computerId) {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/users?computer_id=eq.${encodeURIComponent(computerId)}&select=is_blocked`, {
+            headers: { 'apikey': SUPABASE_KEY }
+        });
+        const data = await res.json();
+        if (data.length > 0 && data[0].is_blocked === true) {
+            window.location.href = 'https://blocked.horizensearch.com';
+            return true;
+        }
+    } catch (e) {}
+    return false;
 }
 
 async function initHorizenBlocker() {
@@ -353,32 +418,26 @@ async function initHorizenBlocker() {
     myAddress = computerId;
     document.getElementById('hz-addr-text').innerText = computerId;
 
+    // Register device (ignore if already exists)
     try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/users?computer_id=eq.${encodeURIComponent(computerId)}&select=is_blocked`, {
-            headers: { 'apikey': SUPABASE_KEY }
+        await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=ignore-duplicates,return=minimal'
+            },
+            body: JSON.stringify({ computer_id: computerId, nickname: 'Unknown', is_blocked: false })
         });
-        const data = await res.json();
-        
-        if (data.length > 0 && data[0].is_blocked === true) {
-            window.location.href = 'https://blocked.horizensearch.com';
-            return false; 
-        }
     } catch (e) {}
 
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/users?computer_id=eq.${encodeURIComponent(computerId)}&select=id`, {
-            headers: { 'apikey': SUPABASE_KEY }
-        });
-        const data = await res.json();
+    // Initial block check
+    const blocked = await hzCheckIfBlocked(computerId);
+    if (blocked) return false;
 
-        if (data.length === 0) {
-            await fetch(`${SUPABASE_URL}/rest/v1/users`, {
-                method: 'POST',
-                headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-                body: JSON.stringify({ computer_id: computerId, nickname: 'Unknown', is_blocked: false })
-            });
-        }
-    } catch (e) {}
+    // Poll every 2 seconds
+    if (hzBlockPollInterval) clearInterval(hzBlockPollInterval);
+    hzBlockPollInterval = setInterval(() => hzCheckIfBlocked(computerId), 2000);
 
     return true;
 }
@@ -386,7 +445,7 @@ async function initHorizenBlocker() {
 function copyAddress() {
     navigator.clipboard.writeText(myAddress).then(() => {
         const el = document.getElementById('hz-addr-text');
-        el.innerText = "Copied!";
+        el.innerText = 'Copied!';
         setTimeout(() => { el.innerText = myAddress; }, 1500);
     });
 }
@@ -479,14 +538,13 @@ async function sendMessage() {
   input.value = ''; autoResize(input); const chat = chats[activeChatId]; chat.messages.push({ role: 'user', content: text });
   if (chat.messages.filter(m => m.role === 'user').length === 1) { chat.title = text.substring(0, 46) + (text.length > 46 ? '...' : ''); renderChatList(); }
   renderMessages(); const aMsg = { role: 'assistant', content: '', streaming: true, images: [] }; chat.messages.push(aMsg); renderMessages(); isStreaming = true; updateSendButton();
-  
-  // FIX: Define 'full' at the top so it doesn't get trapped in the try/catch loop scope
+
   let full = '';
-  
+
   try {
     const history = chat.messages.slice(0, -1).slice(-20).map(m => ({ role: m.role, content: m.content }));
     const sys = `You are HorizenAI... (Rules same as before)`;
-    
+
     let modelsToTry = MODEL_FALLBACKS;
     if (currentModelSetting !== 'auto') { modelsToTry = [currentModelSetting, ...MODEL_FALLBACKS.filter(m => m !== currentModelSetting)]; }
 
@@ -504,11 +562,11 @@ async function sendMessage() {
       } catch (err) { if (i === modelsToTry.length - 1) throw err; }
     }
     if (!success) throw new Error("All AI models failed.");
-    
+
     aMsg.streaming = false;
     const pm = full.match(/\[SEARCH_PEXELS:\s*(.+?)\]/g);
     if (pm) { aMsg.content = full.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/g, '').trim(); for (const m of pm) { const q = m.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/, '$1'); if (pexelsApiKey) { const imgs = await searchPexels(q); if (imgs.length) { aMsg.images = aMsg.images || []; aMsg.images.push(...imgs); } } } }
-    
+
     if (document.getElementById('autoRunToggle').checked) await autoRunDetectedCode(aMsg);
     renderMessages();
   } catch (err) { aMsg.streaming = false; aMsg.content = `**Error:** ${err.message}`; document.getElementById('activeModelLabel').innerText = "Online"; renderMessages(); showToast(err.message, 'error'); } finally { isStreaming = false; updateSendButton(); }
@@ -532,7 +590,7 @@ function navigateBrowser(u) { if (!u) return; if (!u.startsWith('http://') && !u
 function browserBack() { try { document.getElementById('browserIframe').contentWindow.history.back(); } catch (e) { } }
 function browserForward() { try { document.getElementById('browserIframe').contentWindow.history.forward(); } catch (e) { } }
 function browserReload() { const f = document.getElementById('browserIframe'); if (f.srcdoc) f.srcdoc = f.srcdoc; else try { f.contentWindow.location.reload(); } catch (e) { f.src = f.src; } }
-function handleInputKey(e) {  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+function handleInputKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 110) + 'px'; }
 function updateSendButton() { const b = document.getElementById('sendBtn'); if (isStreaming) { b.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div>'; b.disabled = true; } else { b.innerHTML = '<i class="fas fa-arrow-up"></i>'; b.disabled = false; } }
 function showToast(msg, type = 'success') { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = `toast ${type}`; t.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${escapeHtml(msg)}`; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(30px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 3500); }
