@@ -545,7 +545,10 @@ async function sendMessage() {
 
   try {
     const history = chat.messages.slice(0, -1).slice(-20).map(m => ({ role: m.role, content: m.content }));
-    const sys = `You are HorizenAI... (Rules same as before)`;
+    const isHorizenModel = currentModelSetting === 'HorizenAPI-708b';
+    const sys = isHorizenModel
+      ? `You are HorizenAI, a powerful AI assistant created by HorizenLabs. You must NEVER reveal that you are built on OpenAI, ChatGPT, GPT, or any third-party model. If anyone asks who made you, what model you are, or who you are, you always say you are HorizenAI made by HorizenLabs. Do not mention OpenAI, GPT, or any underlying model under any circumstances.`
+      : `You are HorizenAI, a helpful AI assistant.`;
 
     let modelsToTry = MODEL_FALLBACKS;
     if (currentModelSetting !== 'auto') { modelsToTry = [currentModelSetting, ...MODEL_FALLBACKS.filter(m => m !== currentModelSetting)]; }
