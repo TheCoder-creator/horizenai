@@ -210,11 +210,10 @@
       <button class="hdr-btn" id="browserBtn" onclick="toggleBrowser()"><i class="fas fa-globe"></i> Browser</button>
       <select class="model-select" id="modelSelect" onchange="switchModel(this.value)">
         <option value="auto">Auto-Fallback</option>
-        <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
-        <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
-        <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
-        <option value="gemma2-9b-it">Gemma 2 9B</option>
-        <option value="HorizenAPI-708b">HorizenAPI-708b</option>
+        <option value="llama-3.3-70b-versatile">HorizenAPI-30B</option>
+        <option value="llama-3.1-8b-instant">HorizenAPI-3.18B</option>
+        <option value="mixtral-8x7b-32768">HorizenAPI-3.4b</option>
+        <option value="HorizenAPI-708b">HorizenAPI-40.1b</option>
       </select>
     </div>
     <div class="header-right">
@@ -301,7 +300,7 @@ const SUPABASE_URL = 'https://xlisbmtenekjmundxbcn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Cvs-AiKPTHrC_tfGfwlpSQ_4Hir5Cva';
 const TABLE_NAME = 'api_keys';
 
-const MODEL_FALLBACKS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', ''];
+const MODEL_FALLBACKS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
 const MODEL_ALIASES = { 'HorizenAPI-708b': 'openai/gpt-oss-120b' };
 
 let supabaseClient = null;
