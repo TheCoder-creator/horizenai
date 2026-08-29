@@ -68,6 +68,7 @@
   .msg-avatar{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:2px}
   .msg.user .msg-avatar{background:var(--accent-glow);color:var(--accent)}
   .msg.assistant .msg-avatar{background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border)}
+  .msg-body{min-width:0;max-width:100%}
   .msg-bubble{padding:11px 15px;border-radius:10px;font-size:13px;line-height:1.65}
   .msg.user .msg-bubble{background:linear-gradient(135deg,rgba(0,224,158,.13),rgba(0,180,200,.08));border:1px solid rgba(0,224,158,.18);color:var(--text-primary)}
   .msg.assistant .msg-bubble{background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary)}
@@ -77,9 +78,23 @@
   .msg-bubble ul,.msg-bubble ol{padding-left:16px;margin-bottom:7px}.msg-bubble li{margin-bottom:2px}
   .msg-bubble a{color:var(--accent);text-decoration:underline}
   .msg-bubble h1,.msg-bubble h2,.msg-bubble h3{margin:12px 0 6px;color:var(--text-primary)}
+  .msg-actions{display:flex;gap:3px;opacity:0;transition:opacity .15s;margin-top:4px;padding:0 2px}
+  .msg:hover .msg-actions{opacity:1}
+  .msg.user .msg-actions{justify-content:flex-end}
+  .act-btn{background:none;border:1px solid transparent;color:var(--text-muted);font-size:9.5px;padding:2px 7px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:'Space Grotesk',sans-serif;transition:all .15s}
+  .act-btn:hover{background:var(--bg-hover);color:var(--text-primary);border-color:var(--border)}
+
+  .think-block{margin:0 0 10px;border:1px dashed var(--border-light);border-radius:8px;background:rgba(167,139,250,0.045)}
+  .think-block summary{padding:6px 11px;font-size:10.5px;color:var(--purple);cursor:pointer;font-family:'JetBrains Mono',monospace;user-select:none;list-style:none;display:flex;align-items:center;gap:6px}
+  .think-block summary::-webkit-details-marker{display:none}
+  .think-block summary::after{content:'▸';margin-left:auto;color:var(--text-muted);transition:transform .2s}
+  .think-block[open] summary::after{transform:rotate(90deg)}
+  .think-body{padding:8px 12px;font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;font-family:'JetBrains Mono',monospace;max-height:260px;overflow-y:auto;border-top:1px dashed var(--border-light)}
 
   .code-block-wrapper{margin:10px 0;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#151924}
   .code-block-header{display:flex;align-items:center;justify-content:space-between;padding:6px 11px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:10.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+  .code-hdr-btn{width:22px;height:18px;border-radius:4px;background:var(--bg-hover);border:1px solid var(--border);color:var(--text-secondary);cursor:pointer;font-size:8.5px;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
+  .code-hdr-btn:hover{color:var(--accent);border-color:var(--accent)}
   .run-btn{background:var(--accent);color:var(--bg-deep);border:none;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s}
   .run-btn:hover{background:var(--accent-dim);transform:scale(1.05)}
   .code-block-wrapper pre{margin:0;padding:11px;overflow-x:auto}
@@ -92,13 +107,25 @@
   .pexels-img:hover .img-overlay{opacity:1}
 
   .input-area{padding:12px 22px 16px;border-top:1px solid var(--border);background:rgba(13,15,21,.6);backdrop-filter:blur(10px)}
-  .input-wrapper{display:flex;align-items:flex-end;gap:8px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:11px;padding:8px 11px;transition:border-color .2s}
+  .img-preview-strip{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .img-thumb{position:relative;width:52px;height:52px;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+  .img-thumb img{width:100%;height:100%;object-fit:cover}
+  .img-thumb .rm{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:4px;background:rgba(0,0,0,.7);color:#fff;border:none;cursor:pointer;font-size:8px;display:flex;align-items:center;justify-content:center;padding:0}
+  .input-wrapper{display:flex;align-items:flex-end;gap:6px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:11px;padding:8px 11px;transition:border-color .2s}
   .input-wrapper:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
   .input-wrapper textarea{flex:1;background:none;border:none;outline:none;color:var(--text-primary);font-family:'Space Grotesk',sans-serif;font-size:13px;resize:none;max-height:110px;line-height:1.5}
   .input-wrapper textarea::placeholder{color:var(--text-muted)}
+  .input-tool-btn{width:30px;height:30px;border-radius:7px;background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+  .input-tool-btn:hover{background:var(--bg-hover);color:var(--text-primary)}
+  .input-tool-btn.rec{color:var(--danger);animation:blink 1s infinite}
   .send-btn{width:32px;height:32px;border-radius:8px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--bg-deep);font-size:12px;transition:all .2s;flex-shrink:0}
   .send-btn:hover{background:var(--accent-dim);transform:scale(1.05)}
   .send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+  .mode-toggle{display:flex;background:var(--bg-secondary);border:1px solid var(--border);border-radius:7px;padding:2px;gap:2px}
+  .mode-btn{padding:3px 10px;border-radius:5px;border:none;background:transparent;color:var(--text-muted);font-size:10px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'Space Grotesk',sans-serif;transition:all .15s}
+  .mode-btn:hover{color:var(--text-primary)}
+  .mode-btn.active{background:var(--accent-glow);color:var(--accent)}
+  .mode-btn.deep.active{background:rgba(167,139,250,0.14);color:var(--purple)}
 
   .slide-panel{position:absolute;top:0;right:0;width:420px;height:100%;background:var(--bg-primary);border-left:1px solid var(--border);z-index:20;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);box-shadow:-8px 0 30px rgba(0,0,0,0.3)}
   .slide-panel.open{transform:translateX(0)}
@@ -152,7 +179,7 @@
   @keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
   .welcome-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px}
   .welcome-logo{font-size:44px;font-weight:700;letter-spacing:-2px;background:linear-gradient(135deg,var(--accent),#00b8d4,#00e09e);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-  .welcome-sub{color:var(--text-muted);font-size:13.5px;max-width:360px;text-align:center;line-height:1.6}
+  .welcome-sub{color:var(--text-muted);font-size:13.5px;max-width:380px;text-align:center;line-height:1.6}
   .feature-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
   .feature-chip{padding:5px 11px;border-radius:16px;font-size:11px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);display:flex;align-items:center;gap:5px}
   .feature-chip i{color:var(--accent);font-size:9px}
@@ -210,13 +237,14 @@
       <button class="hdr-btn" id="browserBtn" onclick="toggleBrowser()"><i class="fas fa-globe"></i> Browser</button>
       <select class="model-select" id="modelSelect" onchange="switchModel(this.value)">
         <option value="auto">Auto-Fallback</option>
-        <option value="llama-3.3-70b-versatile">HorizenAPI-30B</option>
-        <option value="llama-3.1-8b-instant">HorizenAPI-3.18B</option>
-        <option value="mixtral-8x7b-32768">HorizenAPI-3.4b</option>
+        <option value="HorizenAPI-Scout">HorizenAPI-Scout</option>
+        <option value="HorizenAPI-Maverick">HorizenAPI-Maverick</option>
+        <option value="HorizenAPI-K2">HorizenAPI-K2</option>
         <option value="HorizenAPI-708b">HorizenAPI-708b</option>
       </select>
     </div>
     <div class="header-right">
+      <button class="icon-btn" onclick="exportChat()" title="Export chat as Markdown" aria-label="Export"><i class="fas fa-file-arrow-down"></i></button>
       <button class="icon-btn" id="fullscreenBtn" onclick="toggleFullscreen()" aria-label="Fullscreen"><i class="fas fa-expand"></i></button>
     </div>
   </header>
@@ -276,14 +304,21 @@
     </div>
 
     <div class="input-area">
+      <div class="img-preview-strip" id="imgPreviewStrip" style="display:none;"></div>
       <div class="input-wrapper">
-        <textarea id="userInput" rows="1" placeholder="Ask anything... try 'build a landing page' or 'find mountain images'" onkeydown="handleInputKey(event)" oninput="autoResize(this)"></textarea>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Send"><i class="fas fa-arrow-up"></i></button>
+        <button class="input-tool-btn" onclick="triggerImageUpload()" title="Attach images (max 4)" aria-label="Attach images"><i class="fas fa-paperclip"></i></button>
+        <input type="file" id="imageInput" accept="image/*" multiple style="display:none" onchange="handleImageFiles(event)">
+        <textarea id="userInput" rows="1" placeholder="Ask anything... attach images, speak, or try 'build a landing page'" onkeydown="handleInputKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="input-tool-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input" aria-label="Voice input"><i class="fas fa-microphone"></i></button>
+        <button class="send-btn" id="sendBtn" onclick="onSendClick()" aria-label="Send / Stop"><i class="fas fa-arrow-up"></i></button>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding:0 2px;">
-        <span style="font-size:10px;color:var(--text-muted);">Auto-Fallback Enabled</span>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="modeInstantBtn" onclick="setMode('instant')"><i class="fas fa-bolt"></i> Instant</button>
+          <button class="mode-btn deep" id="modeDeepBtn" onclick="setMode('deep')"><i class="fas fa-brain"></i> Deep Think</button>
+        </div>
         <label style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer;">
-          <input type="checkbox" id="autoRunToggle" checked style="accent-color:var(--accent);"> Auto-run code
+          <input type="checkbox" id="autoRunToggle" checked style="accent-color:var(--accent);" onchange="localStorage.setItem('horizen_autorun', this.checked?'1':'0')"> Auto-run code
         </label>
       </div>
     </div>
@@ -299,14 +334,25 @@
 const SUPABASE_URL = 'https://xlisbmtenekjmundxbcn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Cvs-AiKPTHrC_tfGfwlpSQ_4Hir5Cva';
 const TABLE_NAME = 'api_keys';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-const MODEL_FALLBACKS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
-const MODEL_ALIASES = { 'HorizenAPI-708b': 'openai/gpt-oss-120b' };
+const MODEL_FALLBACKS = ['HorizenAPI-Scout', 'HorizenAPI-Maverick', 'HorizenAPI-K2', 'HorizenAPI-708b'];
+const MODEL_ALIASES = {
+  'HorizenAPI-Scout': 'meta-llama/llama-4-scout-17b-16e-instruct',
+  'HorizenAPI-Maverick': 'meta-llama/llama-4-maverick-17b-128e-instruct',
+  'HorizenAPI-K2': 'moonshotai/kimi-k2-instruct',
+  'HorizenAPI-708b': 'openai/gpt-oss-120b'
+};
+const SHORT_NAMES = { 'HorizenAPI-Scout': 'Scout', 'HorizenAPI-Maverick': 'Maverick', 'HorizenAPI-K2': 'K2', 'HorizenAPI-708b': '708b' };
+const VISION_MODELS = ['meta-llama/llama-4-scout-17b-16e-instruct', 'meta-llama/llama-4-maverick-17b-128e-instruct'];
+const REASONING_MODELS = new Set(['openai/gpt-oss-120b']);
+const STORAGE_KEY = 'horizen_chats_v2';
 
 let supabaseClient = null;
 let groqApiKey = '';
 let pexelsApiKey = '';
 let currentModelSetting = 'auto';
+let currentMode = 'instant';
 let isStreaming = false;
 let chats = {};
 let activeChatId = null;
@@ -316,6 +362,10 @@ let isSidebarHidden = false;
 let browserOpen = false;
 let runnerOpen = false;
 let myAddress = '';
+let abortCtrl = null;
+let pendingImages = [];
+let voiceRec = null;
+let isListening = false;
 
 // ==========================================
 // HORIZEN FINGERPRINT BLOCKER SYSTEM
@@ -419,7 +469,6 @@ async function initHorizenBlocker() {
     myAddress = computerId;
     document.getElementById('hz-addr-text').innerText = computerId;
 
-    // Register device (ignore if already exists)
     try {
         await fetch(`${SUPABASE_URL}/rest/v1/users`, {
             method: 'POST',
@@ -432,11 +481,9 @@ async function initHorizenBlocker() {
         });
     } catch (e) {}
 
-    // Initial block check
     const blocked = await hzCheckIfBlocked(computerId);
     if (blocked) return false;
 
-    // Poll every 2 seconds
     if (hzBlockPollInterval) clearInterval(hzBlockPollInterval);
     hzBlockPollInterval = setInterval(() => hzCheckIfBlocked(computerId), 2000);
 
@@ -492,7 +539,52 @@ async function boot() {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-function switchModel(m) { currentModelSetting = m; if(m === 'auto') showToast('Auto-Fallback Enabled', 'success'); else showToast('Model: ' + m, 'success'); }
+// ==========================================
+// PERSISTENCE
+// ==========================================
+function persistChats() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ chats, activeChatId, chatCounter }));
+  } catch (e) {
+    try {
+      const slim = {};
+      Object.entries(chats).forEach(([id, c]) => {
+        slim[id] = { ...c, messages: c.messages.map(m => (m.images && m.images.length) ? { ...m, images: [] } : m) };
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ chats: slim, activeChatId, chatCounter }));
+      if (!window._quotaWarned) { window._quotaWarned = true; showToast('Storage full — some attached images were not saved', 'warning'); }
+    } catch (e2) {}
+  }
+}
+function loadPersisted() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (d.chats && Object.keys(d.chats).length) {
+      chats = d.chats;
+      Object.values(chats).forEach(c => c.messages.forEach(m => { if (m.streaming) m.streaming = false; }));
+      chatCounter = d.chatCounter || Object.keys(chats).length;
+      const ids = Object.keys(chats);
+      activeChatId = ids.includes(d.activeChatId) ? d.activeChatId : ids[ids.length - 1];
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+// ==========================================
+// MODES / MODELS
+// ==========================================
+function setMode(m, silent) {
+  currentMode = m;
+  document.getElementById('modeInstantBtn').classList.toggle('active', m === 'instant');
+  document.getElementById('modeDeepBtn').classList.toggle('active', m === 'deep');
+  localStorage.setItem('horizen_mode', m);
+  if (!silent) showToast(m === 'deep' ? 'Deep Think — slower, shows reasoning' : 'Instant — fast responses', 'success');
+}
+function switchModel(m) { currentModelSetting = m; localStorage.setItem('horizen_model', m); if (m === 'auto') showToast('Auto-Fallback Enabled', 'success'); else showToast('Model: ' + (SHORT_NAMES[m] || m), 'success'); }
+
 function toggleBrowser() { if (runnerOpen) closeRunner(); browserOpen = !browserOpen; document.getElementById('browserPanel').classList.toggle('open', browserOpen); document.getElementById('browserBtn').classList.toggle('active', browserOpen); }
 function closeBrowser() { browserOpen = false; document.getElementById('browserPanel').classList.remove('open'); document.getElementById('browserBtn').classList.remove('active'); }
 function openRunner() { if (browserOpen) closeBrowser(); runnerOpen = true; document.getElementById('runnerPanel').classList.add('open'); document.getElementById('codeRanPill').style.display = 'none'; }
@@ -500,10 +592,20 @@ function closeRunner() { runnerOpen = false; document.getElementById('runnerPane
 function showCodeRanPill() { if (runnerOpen) return; document.getElementById('codeRanPill').style.display = 'flex'; }
 function toggleSidebar() { isSidebarHidden = !isSidebarHidden; document.getElementById('appLayout').classList.toggle('sidebar-hidden', isSidebarHidden); document.getElementById('sidebarToggle').classList.toggle('active', isSidebarHidden); }
 function toggleFullscreen() { isFullscreen = !isFullscreen; const layout = document.getElementById('appLayout'); const btn = document.getElementById('fullscreenBtn'); layout.classList.toggle('fullscreen', isFullscreen); if (isFullscreen) { btn.classList.add('active'); btn.innerHTML = '<i class="fas fa-compress"></i>'; closeBrowser(); closeRunner(); } else { btn.classList.remove('active'); btn.innerHTML = '<i class="fas fa-expand"></i>'; } }
-function initApp() { newChat(); document.getElementById('userInput').focus(); }
-function newChat() { chatCounter++; const id = 'chat_' + chatCounter; chats[id] = { title: 'New Chat', messages: [] }; activeChatId = id; renderChatList(); renderMessages(); }
-function switchChat(id) { if (isStreaming) return; activeChatId = id; renderChatList(); renderMessages(); }
-function deleteChat(id, e) { e.stopPropagation(); if (isStreaming) return; delete chats[id]; const ids = Object.keys(chats); if (!ids.length) newChat(); else activeChatId = ids[ids.length - 1]; renderChatList(); renderMessages(); }
+
+function initApp() {
+  if (!loadPersisted()) newChat(); else { renderChatList(); renderMessages(); }
+  const savedModel = localStorage.getItem('horizen_model');
+  if (savedModel) { currentModelSetting = savedModel; document.getElementById('modelSelect').value = savedModel; }
+  const savedMode = localStorage.getItem('horizen_mode');
+  if (savedMode === 'deep' || savedMode === 'instant') setMode(savedMode, true);
+  const savedAutoRun = localStorage.getItem('horizen_autorun');
+  if (savedAutoRun !== null) document.getElementById('autoRunToggle').checked = savedAutoRun === '1';
+  document.getElementById('userInput').focus();
+}
+function newChat() { chatCounter++; const id = 'chat_' + chatCounter; chats[id] = { title: 'New Chat', messages: [], aiTitled: false }; activeChatId = id; renderChatList(); renderMessages(); persistChats(); }
+function switchChat(id) { if (isStreaming) return; activeChatId = id; renderChatList(); renderMessages(); persistChats(); }
+function deleteChat(id, e) { e.stopPropagation(); if (isStreaming) return; delete chats[id]; const ids = Object.keys(chats); if (!ids.length) newChat(); else activeChatId = ids[ids.length - 1]; renderChatList(); renderMessages(); persistChats(); }
 
 function renderChatList() {
   const list = document.getElementById('chatList');
@@ -513,68 +615,272 @@ function renderChatList() {
 function renderMessages() {
   const container = document.getElementById('messagesContainer'); const chat = chats[activeChatId];
   if (!chat || !chat.messages.length) {
-    container.innerHTML = `<div class="welcome-screen"><div class="welcome-logo">HorizenAI</div><div class="welcome-sub">Streaming AI with automatic model fallback. If one model is down, it seamlessly switches to another.</div><div class="feature-chips"><div class="feature-chip"><i class="fas fa-bolt"></i> Auto-Fallback</div><div class="feature-chip"><i class="fas fa-image"></i> Pexels Images</div><div class="feature-chip"><i class="fas fa-code"></i> Auto Code Runner</div><div class="feature-chip"><i class="fas fa-globe"></i> Browser Panel</div></div></div>`; return;
+    container.innerHTML = `<div class="welcome-screen"><div class="welcome-logo">HorizenAI</div><div class="welcome-sub">Streaming AI with vision, voice, and deep thinking. Attach images, dictate prompts, or switch to Deep Think to watch it reason.</div><div class="feature-chips"><div class="feature-chip"><i class="fas fa-bolt"></i> Instant</div><div class="feature-chip"><i class="fas fa-brain"></i> Deep Think</div><div class="feature-chip"><i class="fas fa-image"></i> Image Uploads</div><div class="feature-chip"><i class="fas fa-microphone"></i> Voice</div><div class="feature-chip"><i class="fas fa-image"></i> Pexels</div><div class="feature-chip"><i class="fas fa-code"></i> Auto Runner</div></div></div>`; return;
   }
-  container.innerHTML = chat.messages.map(m => { if (m.role === 'user') return `<div class="msg user"><div class="msg-avatar"><i class="fas fa-user"></i></div><div class="msg-bubble">${escapeHtml(m.content)}</div></div>`; return `<div class="msg assistant"><div class="msg-avatar"><i class="fas fa-bolt"></i></div><div class="msg-bubble">${renderAssistantContent(m)}</div></div>`; }).join('');
+  container.innerHTML = chat.messages.map((m, idx) => {
+    if (m.role === 'user') {
+      const imgs = (m.images && m.images.length) ? `<div class="pexels-grid">${m.images.map(u => `<div class="pexels-img" onclick="openLightbox('${u}')"><img src="${u}" alt="attachment" loading="lazy"><div class="img-overlay"><i class="fas fa-expand"></i></div></div>`).join('')}</div>` : '';
+      return `<div class="msg user"><div class="msg-avatar"><i class="fas fa-user"></i></div><div class="msg-body"><div class="msg-bubble">${escapeHtml(m.content)}${imgs}</div><div class="msg-actions"><button class="act-btn" onclick="copyMessage(${idx})"><i class="fas fa-copy"></i> Copy</button><button class="act-btn" onclick="editMessage(${idx})"><i class="fas fa-pen"></i> Edit</button></div></div></div>`;
+    }
+    const isLast = idx === chat.messages.length - 1;
+    const acts = `<div class="msg-actions"><button class="act-btn" onclick="copyMessage(${idx})"><i class="fas fa-copy"></i> Copy</button>${(isLast && !isStreaming) ? `<button class="act-btn" onclick="regenerateMessage(${idx})"><i class="fas fa-rotate-right"></i> Regenerate</button>` : ''}</div>`;
+    return `<div class="msg assistant"><div class="msg-avatar"><i class="fas fa-bolt"></i></div><div class="msg-body"><div class="msg-bubble">${renderAssistantContent(m)}</div>${acts}</div></div>`;
+  }).join('');
   container.querySelectorAll('pre code').forEach(b => hljs.highlightElement(b)); container.scrollTop = container.scrollHeight;
 }
 
 function renderAssistantContent(msg) {
-  if (msg.streaming) return `<span class="streaming-cursor">${msg.content}</span>`;
-  let html = renderMarkdown(msg.content);
-  if (msg.images?.length) { html += '<div class="pexels-grid">'; msg.images.forEach(img => { html += `<div class="pexels-img" onclick="openLightbox('${img.src.large}')"><img src="${img.src.medium}" alt="${escapeHtml(img.alt || '')}" loading="lazy"><div class="img-overlay"><i class="fas fa-expand"></i> View</div></div>`; }); html += '</div>'; }
+  let html = '';
+  if (msg.thinking) html += `<details class="think-block"><summary><i class="fas fa-brain"></i> Thinking</summary><div class="think-body">${escapeHtml(msg.thinking)}</div></details>`;
+  html += renderMarkdown(msg.content);
+  if (msg.images && msg.images.length) { html += '<div class="pexels-grid">'; msg.images.forEach(img => { html += `<div class="pexels-img" onclick="openLightbox('${img.src.large}')"><img src="${img.src.medium}" alt="${escapeHtml(img.alt || '')}" loading="lazy"><div class="img-overlay"><i class="fas fa-expand"></i> View</div></div>`; }); html += '</div>'; }
+  if (msg.streaming) html = (msg.thinking ? html : '') + `<span class="streaming-cursor">${escapeHtml(msg.content)}</span>`;
   return html;
 }
 
 function renderMarkdown(text) {
   if (!text) return ''; const renderer = new marked.Renderer();
-  renderer.code = function (obj) { const code = typeof obj === 'string' ? obj : obj.text; const lang = typeof obj === 'string' ? arguments[1] : (obj.lang || ''); const hl = lang && hljs.getLanguage(lang) ? hljs.highlight(code, { language: lang }).value : hljs.highlightAuto(code).value; const dl = lang || 'code'; const canRun = ['html', 'javascript', 'js', 'css'].includes(lang.toLowerCase()); return `<div class="code-block-wrapper"><div class="code-block-header"><span>${dl}</span>${canRun ? `<button class="run-btn" onclick="runCodeFromBlock(this)"><i class="fas fa-play" style="margin-right:2px;font-size:8px;"></i> Run</button>` : ''}</div><pre><code class="hljs language-${dl}">${hl}</code></pre></div>`; };
+  renderer.code = function (obj) { const code = typeof obj === 'string' ? obj : obj.text; const lang = typeof obj === 'string' ? arguments[1] : (obj.lang || ''); const hl = lang && hljs.getLanguage(lang) ? hljs.highlight(code, { language: lang }).value : hljs.highlightAuto(code).value; const dl = lang || 'code'; const canRun = ['html', 'javascript', 'js', 'css'].includes(lang.toLowerCase()); return `<div class="code-block-wrapper"><div class="code-block-header"><span>${dl}</span><div style="display:flex;gap:4px;align-items:center;"><button class="code-hdr-btn" onclick="copyCode(this)" title="Copy code"><i class="fas fa-copy"></i></button>${canRun ? `<button class="run-btn" onclick="runCodeFromBlock(this)"><i class="fas fa-play" style="margin-right:2px;font-size:8px;"></i> Run</button>` : ''}</div></div><pre><code class="hljs language-${dl}">${hl}</code></pre></div>`; };
   marked.setOptions({ breaks: true, gfm: true, renderer }); return marked.parse(text);
 }
 
 function runCodeFromBlock(btn) { const w = btn.closest('.code-block-wrapper'); const code = w.querySelector('code').textContent; const lang = w.querySelector('.code-block-header span').textContent.toLowerCase(); document.getElementById('runnerCode').value = code; document.getElementById('runnerLang').value = ['html', 'css'].includes(lang) ? lang : 'javascript'; openRunner(); runCode(false); }
+function copyCode(btn) { const code = btn.closest('.code-block-wrapper').querySelector('code').textContent; navigator.clipboard.writeText(code).then(() => { const h = btn.innerHTML; btn.innerHTML = '<i class="fas fa-check" style="color:var(--accent)"></i>'; setTimeout(() => btn.innerHTML = h, 1200); }).catch(() => showToast('Copy failed', 'error')); }
+function copyMessage(idx) { const m = chats[activeChatId]?.messages[idx]; if (!m) return; navigator.clipboard.writeText(m.content || '').then(() => showToast('Copied to clipboard', 'success')).catch(() => showToast('Copy failed', 'error')); }
+
+function editMessage(idx) {
+  if (isStreaming) return;
+  const chat = chats[activeChatId]; const m = chat.messages[idx];
+  if (!m || m.role !== 'user') return;
+  const input = document.getElementById('userInput');
+  input.value = m.content;
+  pendingImages = (m.images && m.images.length) ? [...m.images] : [];
+  renderImagePreviews(); autoResize(input);
+  chat.messages = chat.messages.slice(0, idx);
+  renderMessages(); persistChats();
+  input.focus();
+}
+
+async function regenerateMessage(idx) {
+  if (isStreaming) return;
+  const chat = chats[activeChatId]; const m = chat.messages[idx];
+  if (!m || m.role !== 'assistant') return;
+  chat.messages = chat.messages.slice(0, idx);
+  renderMessages();
+  const lastUser = [...chat.messages].reverse().find(x => x.role === 'user');
+  if (!lastUser) { renderMessages(); return; }
+  await runAssistantTurn(chat, lastUser);
+}
+
+function exportChat() {
+  const chat = chats[activeChatId];
+  if (!chat || !chat.messages.length) { showToast('Nothing to export', 'warning'); return; }
+  let md = `# ${chat.title}\n\n`;
+  chat.messages.forEach(m => {
+    if (m.role === 'user') { md += `## 🧑 User\n\n${m.content}\n\n`; if (m.images && m.images.length) md += `_(attached ${m.images.length} image(s))_\n\n`; }
+    else {
+      if (m.thinking) md += `> **Thinking:** ${m.thinking.trim().replace(/\n/g, '\n> ')}\n\n`;
+      md += `## 🤖 HorizenAI\n\n${m.content}\n\n`;
+      if (m.images && m.images.length) md += `_(showed ${m.images.length} image(s))_\n\n`;
+    }
+  });
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = (chat.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_') || 'chat') + '.md';
+  a.click(); URL.revokeObjectURL(a.href);
+  showToast('Chat exported as Markdown', 'success');
+}
+
+// ==========================================
+// IMAGE UPLOADS
+// ==========================================
+function triggerImageUpload() { document.getElementById('imageInput').click(); }
+function handleImageFiles(e) {
+  const files = [...e.target.files];
+  e.target.value = '';
+  const room = 4 - pendingImages.length;
+  if (files.length > room) showToast('Max 4 images per message', 'warning');
+  files.slice(0, Math.max(0, room)).forEach(f => {
+    if (!f.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = ev => downscaleImage(ev.target.result);
+    reader.readAsDataURL(f);
+  });
+}
+function downscaleImage(dataUrl) {
+  const img = new Image();
+  img.onload = () => {
+    const max = 900;
+    let w = img.width, h = img.height;
+    if (w > max || h > max) { const s = Math.min(max / w, max / h); w = Math.round(w * s); h = Math.round(h * s); }
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    pendingImages.push(c.toDataURL('image/jpeg', 0.82));
+    renderImagePreviews();
+  };
+  img.src = dataUrl;
+}
+function removePendingImage(i) { pendingImages.splice(i, 1); renderImagePreviews(); }
+function renderImagePreviews() {
+  const c = document.getElementById('imgPreviewStrip');
+  if (!pendingImages.length) { c.innerHTML = ''; c.style.display = 'none'; return; }
+  c.style.display = 'flex';
+  c.innerHTML = pendingImages.map((u, i) => `<div class="img-thumb"><img src="${u}" alt="attachment"><button class="rm" onclick="removePendingImage(${i})" aria-label="Remove"><i class="fas fa-times"></i></button></div>`).join('');
+}
+
+// ==========================================
+// VOICE INPUT
+// ==========================================
+function toggleVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('Voice input not supported in this browser', 'error'); return; }
+  if (isListening) { voiceRec.stop(); return; }
+  voiceRec = new SR();
+  voiceRec.interimResults = true;
+  voiceRec.continuous = false;
+  voiceRec.lang = navigator.language || 'en-US';
+  const input = document.getElementById('userInput');
+  let base = '';
+  voiceRec.onstart = () => { isListening = true; base = input.value; updateVoiceBtn(); };
+  voiceRec.onresult = (e) => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; input.value = (base ? base + ' ' : '') + t; autoResize(input); };
+  voiceRec.onend = () => { isListening = false; updateVoiceBtn(); };
+  voiceRec.onerror = (e) => { isListening = false; updateVoiceBtn(); if (e.error !== 'no-speech' && e.error !== 'aborted') showToast('Voice error: ' + e.error, 'error'); };
+  voiceRec.start();
+}
+function updateVoiceBtn() { const b = document.getElementById('voiceBtn'); b.classList.toggle('rec', isListening); b.innerHTML = isListening ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-microphone"></i>'; }
+
+// ==========================================
+// CHAT / STREAMING
+// ==========================================
+function toApiMessage(m) {
+  if (m.role === 'user' && m.images && m.images.length) {
+    return { role: 'user', content: [{ type: 'text', text: m.content || '' }, ...m.images.map(u => ({ type: 'image_url', image_url: { url: u } }))] };
+  }
+  return { role: m.role, content: m.content };
+}
 
 async function sendMessage() {
-  const input = document.getElementById('userInput'); const text = input.value.trim(); if (!text || isStreaming) return; if (!groqApiKey) { showToast('No Groq key', 'error'); return }
-  input.value = ''; autoResize(input); const chat = chats[activeChatId]; chat.messages.push({ role: 'user', content: text });
+  const input = document.getElementById('userInput');
+  const rawText = input.value.trim();
+  if ((!rawText && !pendingImages.length) || isStreaming) return;
+  if (!groqApiKey) { showToast('No Groq key', 'error'); return; }
+  const text = rawText || 'Describe this image in detail.';
+  const chat = chats[activeChatId];
+  const userMsg = { role: 'user', content: text };
+  if (pendingImages.length) userMsg.images = [...pendingImages];
+  chat.messages.push(userMsg);
+  input.value = ''; autoResize(input);
+  pendingImages = []; renderImagePreviews();
   if (chat.messages.filter(m => m.role === 'user').length === 1) { chat.title = text.substring(0, 46) + (text.length > 46 ? '...' : ''); renderChatList(); }
-  renderMessages(); const aMsg = { role: 'assistant', content: '', streaming: true, images: [] }; chat.messages.push(aMsg); renderMessages(); isStreaming = true; updateSendButton();
+  persistChats();
+  await runAssistantTurn(chat, userMsg);
+}
 
-  let full = '';
+async function runAssistantTurn(chat, sourceMsg) {
+  const aMsg = { role: 'assistant', content: '', thinking: '', streaming: true, images: [] };
+  chat.messages.push(aMsg); renderMessages(); isStreaming = true; updateSendButton();
+  let full = '', think = '', aborted = false;
+  abortCtrl = new AbortController();
+  const hasImages = !!(sourceMsg.images && sourceMsg.images.length);
+  const isFirstUserMsg = chat.messages.filter(m => m.role === 'user').length === 1;
 
   try {
-    const history = chat.messages.slice(0, -1).slice(-20).map(m => ({ role: m.role, content: m.content }));
+    const history = chat.messages.slice(0, -1).slice(-20).map(toApiMessage);
     const sys = `You are HorizenAI... (Rules same as before)`;
 
     let modelsToTry = MODEL_FALLBACKS;
-    if (currentModelSetting !== 'auto') { modelsToTry = [currentModelSetting, ...MODEL_FALLBACKS.filter(m => m !== currentModelSetting)]; }
+    if (currentModelSetting !== 'auto') modelsToTry = [currentModelSetting, ...MODEL_FALLBACKS.filter(m => m !== currentModelSetting)];
+    else if (currentMode === 'deep' && !hasImages) modelsToTry = ['HorizenAPI-708b', ...MODEL_FALLBACKS.filter(m => m !== 'HorizenAPI-708b')];
+    else if (currentMode === 'instant') modelsToTry = ['HorizenAPI-Scout', ...MODEL_FALLBACKS.filter(m => m !== 'HorizenAPI-Scout')];
+    if (hasImages) {
+      const vision = modelsToTry.filter(m => VISION_MODELS.includes(MODEL_ALIASES[m] || m));
+      if (vision.length < modelsToTry.length) showToast('Selected model can\'t see images — switched to a vision model', 'warning');
+      else if (currentMode === 'deep') showToast('Deep Think unavailable with images — using vision model', 'warning');
+      modelsToTry = vision.length ? vision : ['HorizenAPI-Scout', 'HorizenAPI-Maverick'];
+    }
 
     let success = false;
     for (let i = 0; i < modelsToTry.length; i++) {
       const model = modelsToTry[i];
       try {
-        document.getElementById('activeModelLabel').innerText = `Trying ${model}...`;
+        document.getElementById('activeModelLabel').innerText = `Trying ${SHORT_NAMES[model] || model}...`;
         const resolvedModel = MODEL_ALIASES[model] || model;
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: resolvedModel, messages: [{ role: 'system', content: sys }, ...history, { role: 'user', content: text }], stream: true, temperature: 0.7, max_tokens: 4096 }) });
-        if (!res.ok) { if (res.status === 429 || res.status >= 500) { showToast(`${model} down/limited. Switching...`, 'warning'); continue; } const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `API ${res.status}`); }
-        document.getElementById('activeModelLabel').innerText = model.split('-')[0];
+        const body = { model: resolvedModel, messages: [{ role: 'system', content: sys }, ...history], stream: true, temperature: 0.7, max_tokens: 4096 };
+        if (currentMode === 'deep' && REASONING_MODELS.has(resolvedModel)) { body.reasoning_effort = 'high'; body.reasoning_format = 'parsed'; body.max_tokens = 8192; }
+        const res = await fetch(GROQ_URL, { method: 'POST', headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: abortCtrl.signal });
+        if (!res.ok) { if (res.status === 429 || res.status >= 500) { showToast(`${SHORT_NAMES[model] || model} down/limited. Switching...`, 'warning'); continue; } const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `API ${res.status}`); }
+        document.getElementById('activeModelLabel').innerText = SHORT_NAMES[model] || model;
         const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
-        while (true) { const { done, value } = await reader.read(); if (done) break; buf += dec.decode(value, { stream: true }); const lines = buf.split('\n'); buf = lines.pop() || ''; for (const line of lines) { const t = line.trim(); if (!t || !t.startsWith('data: ')) continue; const d = t.slice(6); if (d === '[DONE]') continue; try { const j = JSON.parse(d); const delta = j.choices?.[0]?.delta?.content; if (delta) { full += delta; aMsg.content = full; updateStreamingMessage(aMsg); } } catch (e) { } } }
+        while (true) {
+          const { done, value } = await reader.read(); if (done) break;
+          buf += dec.decode(value, { stream: true }); const lines = buf.split('\n'); buf = lines.pop() || '';
+          for (const line of lines) {
+            const t = line.trim(); if (!t || !t.startsWith('data: ')) continue;
+            const d = t.slice(6); if (d === '[DONE]') continue;
+            try {
+              const j = JSON.parse(d); const delta = j.choices?.[0]?.delta || {};
+              if (delta.reasoning) { think += delta.reasoning; aMsg.thinking = think; updateStreamingMessage(aMsg); }
+              if (delta.content) { full += delta.content; aMsg.content = full; updateStreamingMessage(aMsg); }
+            } catch (e) { }
+          }
+        }
         success = true; break;
-      } catch (err) { if (i === modelsToTry.length - 1) throw err; }
+      } catch (err) {
+        if (err.name === 'AbortError') { aborted = true; break; }
+        if (i === modelsToTry.length - 1) throw err;
+      }
     }
-    if (!success) throw new Error("All AI models failed.");
+    if (!success && !aborted) throw new Error("All AI models failed.");
 
     aMsg.streaming = false;
-    const pm = full.match(/\[SEARCH_PEXELS:\s*(.+?)\]/g);
-    if (pm) { aMsg.content = full.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/g, '').trim(); for (const m of pm) { const q = m.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/, '$1'); if (pexelsApiKey) { const imgs = await searchPexels(q); if (imgs.length) { aMsg.images = aMsg.images || []; aMsg.images.push(...imgs); } } } }
-
-    if (document.getElementById('autoRunToggle').checked) await autoRunDetectedCode(aMsg);
-    renderMessages();
-  } catch (err) { aMsg.streaming = false; aMsg.content = `**Error:** ${err.message}`; document.getElementById('activeModelLabel').innerText = "Online"; renderMessages(); showToast(err.message, 'error'); } finally { isStreaming = false; updateSendButton(); }
+    if (aborted) {
+      if (!aMsg.content) aMsg.content = '_Generation stopped._';
+      document.getElementById('activeModelLabel').innerText = "Online";
+      renderMessages();
+    } else {
+      const pm = full.match(/\[SEARCH_PEXELS:\s*(.+?)\]/g);
+      if (pm) { aMsg.content = full.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/g, '').trim(); for (const m of pm) { const q = m.replace(/\[SEARCH_PEXELS:\s*(.+?)\]/, '$1'); if (pexelsApiKey) { const imgs = await searchPexels(q); if (imgs.length) { aMsg.images = aMsg.images || []; aMsg.images.push(...imgs); } } } }
+      if (document.getElementById('autoRunToggle').checked) await autoRunDetectedCode(aMsg);
+      renderMessages();
+      if (isFirstUserMsg && !chat.aiTitled && sourceMsg.content) { chat.aiTitled = true; generateChatTitle(chat, sourceMsg.content); }
+    }
+  } catch (err) {
+    aMsg.streaming = false;
+    aMsg.content = `**Error:** ${err.message}`;
+    document.getElementById('activeModelLabel').innerText = "Online";
+    renderMessages(); showToast(err.message, 'error');
+  } finally {
+    isStreaming = false; abortCtrl = null; updateSendButton(); persistChats();
+  }
 }
 
-function updateStreamingMessage(msg) { const c = document.getElementById('messagesContainer'); const all = c.querySelectorAll('.msg.assistant'); const last = all[all.length - 1]; if (!last) return; const b = last.querySelector('.msg-bubble'); if (!b) return; b.innerHTML = `<span class="streaming-cursor">${renderMarkdown(msg.content)}</span>`; b.querySelectorAll('pre code').forEach(bl => { if (!bl.classList.contains('hljs')) hljs.highlightElement(bl); }); c.scrollTop = c.scrollHeight; }
+function stopGeneration() { if (abortCtrl) abortCtrl.abort(); }
+
+async function generateChatTitle(chat, firstUserText) {
+  try {
+    const res = await fetch(GROQ_URL, { method: 'POST', headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: MODEL_ALIASES['HorizenAPI-Scout'], messages: [{ role: 'system', content: 'Generate a very short chat title (3-5 words, no quotes, no trailing punctuation) summarizing the user message. Reply with ONLY the title.' }, { role: 'user', content: firstUserText.substring(0, 500) }], max_tokens: 24, temperature: 0.3 }) });
+    if (!res.ok) return;
+    const d = await res.json();
+    const t = d.choices?.[0]?.message?.content?.trim().replace(/^["'#\s]+|["'.\s]+$/g, '');
+    if (t && t.length <= 60) { chat.title = t; renderChatList(); persistChats(); }
+  } catch (e) { }
+}
+
+function updateStreamingMessage(msg) {
+  const c = document.getElementById('messagesContainer');
+  const all = c.querySelectorAll('.msg.assistant');
+  const last = all[all.length - 1];
+  if (!last) return;
+  const b = last.querySelector('.msg-bubble');
+  if (!b) return;
+  let html = '';
+  if (msg.thinking) html += `<details class="think-block" ${msg.content ? '' : 'open'}><summary><i class="fas fa-brain"></i> Thinking…</summary><div class="think-body">${escapeHtml(msg.thinking)}</div></details>`;
+  html += `<span class="streaming-cursor">${renderMarkdown(msg.content)}</span>`;
+  b.innerHTML = html;
+  b.querySelectorAll('pre code').forEach(bl => { if (!bl.classList.contains('hljs')) hljs.highlightElement(bl); });
+  c.scrollTop = c.scrollHeight;
+}
+
 async function autoRunDetectedCode(msg) { const blocks = extractCodeBlocks(msg.content); const htmlBlock = blocks.find(b => b.lang === 'html'); const jsBlock = blocks.find(b => ['javascript', 'js'].includes(b.lang)); if (htmlBlock) { document.getElementById('runnerCode').value = htmlBlock.code; document.getElementById('runnerLang').value = 'html'; await runCode(true); showCodeRanPill(); } else if (jsBlock && jsBlock.code.length > 50) { document.getElementById('runnerCode').value = jsBlock.code; document.getElementById('runnerLang').value = 'javascript'; await runCode(true); showCodeRanPill(); } }
 function extractCodeBlocks(text) { const b = []; const r = /```(\w+)?\n([\s\S]*?)```/g; let m; while ((m = r.exec(text)) !== null) b.push({ lang: (m[1] || '').toLowerCase(), code: m[2].trim() }); return b; }
 async function searchPexels(q) { try { const r = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&per_page=6&orientation=landscape`, { headers: { 'Authorization': pexelsApiKey } }); if (!r.ok) throw 0; const d = await r.json(); return (d.photos || []).map(p => ({ src: { large: p.src.large, medium: p.src.medium, small: p.src.small }, alt: p.alt || q, photographer: p.photographer })); } catch (e) { showToast('Image search failed', 'error'); return []; } }
@@ -594,14 +900,15 @@ function browserForward() { try { document.getElementById('browserIframe').conte
 function browserReload() { const f = document.getElementById('browserIframe'); if (f.srcdoc) f.srcdoc = f.srcdoc; else try { f.contentWindow.location.reload(); } catch (e) { f.src = f.src; } }
 function handleInputKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 110) + 'px'; }
-function updateSendButton() { const b = document.getElementById('sendBtn'); if (isStreaming) { b.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div>'; b.disabled = true; } else { b.innerHTML = '<i class="fas fa-arrow-up"></i>'; b.disabled = false; } }
+function onSendClick() { if (isStreaming) stopGeneration(); else sendMessage(); }
+function updateSendButton() { const b = document.getElementById('sendBtn'); if (isStreaming) { b.innerHTML = '<i class="fas fa-stop"></i>'; b.style.background = 'var(--danger)'; b.title = 'Stop generating'; } else { b.innerHTML = '<i class="fas fa-arrow-up"></i>'; b.style.background = ''; b.title = 'Send'; } }
 function showToast(msg, type = 'success') { const c = document.getElementById('toastContainer'); const t = document.createElement('div'); t.className = `toast ${type}`; t.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i> ${escapeHtml(msg)}`; c.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(30px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 3500); }
 function openLightbox(s) { document.getElementById('lightboxImg').src = s; document.getElementById('lightbox').classList.add('show'); }
 function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); newChat(); }
-  if (e.key === 'Escape') { document.getElementById('lightbox').classList.remove('show'); if (isFullscreen) toggleFullscreen(); if (runnerOpen) closeRunner(); if (browserOpen) closeBrowser(); }
+  if (e.key === 'Escape') { document.getElementById('lightbox').classList.remove('show'); if (isListening && voiceRec) voiceRec.stop(); if (isFullscreen) toggleFullscreen(); if (runnerOpen) closeRunner(); if (browserOpen) closeBrowser(); }
   if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
 });
 
