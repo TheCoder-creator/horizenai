@@ -84,13 +84,6 @@
   .act-btn{background:none;border:1px solid transparent;color:var(--text-muted);font-size:9.5px;padding:2px 7px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:'Space Grotesk',sans-serif;transition:all .15s}
   .act-btn:hover{background:var(--bg-hover);color:var(--text-primary);border-color:var(--border)}
 
-  .think-block{margin:0 0 10px;border:1px dashed var(--border-light);border-radius:8px;background:rgba(167,139,250,0.045)}
-  .think-block summary{padding:6px 11px;font-size:10.5px;color:var(--purple);cursor:pointer;font-family:'JetBrains Mono',monospace;user-select:none;list-style:none;display:flex;align-items:center;gap:6px}
-  .think-block summary::-webkit-details-marker{display:none}
-  .think-block summary::after{content:'▸';margin-left:auto;color:var(--text-muted);transition:transform .2s}
-  .think-block[open] summary::after{transform:rotate(90deg)}
-  .think-body{padding:8px 12px;font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;font-family:'JetBrains Mono',monospace;max-height:260px;overflow-y:auto;border-top:1px dashed var(--border-light)}
-
   .code-block-wrapper{margin:10px 0;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:#151924}
   .code-block-header{display:flex;align-items:center;justify-content:space-between;padding:6px 11px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:10.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
   .code-hdr-btn{width:22px;height:18px;border-radius:4px;background:var(--bg-hover);border:1px solid var(--border);color:var(--text-secondary);cursor:pointer;font-size:8.5px;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
@@ -121,11 +114,6 @@
   .send-btn{width:32px;height:32px;border-radius:8px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--bg-deep);font-size:12px;transition:all .2s;flex-shrink:0}
   .send-btn:hover{background:var(--accent-dim);transform:scale(1.05)}
   .send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
-  .mode-toggle{display:flex;background:var(--bg-secondary);border:1px solid var(--border);border-radius:7px;padding:2px;gap:2px}
-  .mode-btn{padding:3px 10px;border-radius:5px;border:none;background:transparent;color:var(--text-muted);font-size:10px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'Space Grotesk',sans-serif;transition:all .15s}
-  .mode-btn:hover{color:var(--text-primary)}
-  .mode-btn.active{background:var(--accent-glow);color:var(--accent)}
-  .mode-btn.deep.active{background:rgba(167,139,250,0.14);color:var(--purple)}
 
   .slide-panel{position:absolute;top:0;right:0;width:420px;height:100%;background:var(--bg-primary);border-left:1px solid var(--border);z-index:20;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);box-shadow:-8px 0 30px rgba(0,0,0,0.3)}
   .slide-panel.open{transform:translateX(0)}
@@ -313,10 +301,7 @@
         <button class="send-btn" id="sendBtn" onclick="onSendClick()" aria-label="Send / Stop"><i class="fas fa-arrow-up"></i></button>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding:0 2px;">
-        <div class="mode-toggle">
-          <button class="mode-btn active" id="modeInstantBtn" onclick="setMode('instant')"><i class="fas fa-bolt"></i> Instant</button>
-          <button class="mode-btn deep" id="modeDeepBtn" onclick="setMode('deep')"><i class="fas fa-brain"></i> Deep Think</button>
-        </div>
+        <span style="font-size:10px;color:var(--text-muted);">Auto-Fallback Enabled</span>
         <label style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer;">
           <input type="checkbox" id="autoRunToggle" checked style="accent-color:var(--accent);" onchange="localStorage.setItem('horizen_autorun', this.checked?'1':'0')"> Auto-run code
         </label>
@@ -345,14 +330,12 @@ const MODEL_ALIASES = {
 };
 const SHORT_NAMES = { 'HorizenAPI-Scout': 'Scout', 'HorizenAPI-Maverick': 'Maverick', 'HorizenAPI-K2': 'K2', 'HorizenAPI-708b': '708b' };
 const VISION_MODELS = ['meta-llama/llama-4-scout-17b-16e-instruct', 'meta-llama/llama-4-maverick-17b-128e-instruct'];
-const REASONING_MODELS = new Set(['openai/gpt-oss-120b']);
 const STORAGE_KEY = 'horizen_chats_v2';
 
 let supabaseClient = null;
 let groqApiKey = '';
 let pexelsApiKey = '';
 let currentModelSetting = 'auto';
-let currentMode = 'instant';
 let isStreaming = false;
 let chats = {};
 let activeChatId = null;
@@ -563,7 +546,7 @@ function loadPersisted() {
     const d = JSON.parse(raw);
     if (d.chats && Object.keys(d.chats).length) {
       chats = d.chats;
-      Object.values(chats).forEach(c => c.messages.forEach(m => { if (m.streaming) m.streaming = false; }));
+      Object.values(chats).forEach(c => c.messages.forEach(m => { if (m.streaming) m.streaming = false; if (m.thinking) delete m.thinking; }));
       chatCounter = d.chatCounter || Object.keys(chats).length;
       const ids = Object.keys(chats);
       activeChatId = ids.includes(d.activeChatId) ? d.activeChatId : ids[ids.length - 1];
@@ -573,16 +556,6 @@ function loadPersisted() {
   return false;
 }
 
-// ==========================================
-// MODES / MODELS
-// ==========================================
-function setMode(m, silent) {
-  currentMode = m;
-  document.getElementById('modeInstantBtn').classList.toggle('active', m === 'instant');
-  document.getElementById('modeDeepBtn').classList.toggle('active', m === 'deep');
-  localStorage.setItem('horizen_mode', m);
-  if (!silent) showToast(m === 'deep' ? 'Deep Think — slower, shows reasoning' : 'Instant — fast responses', 'success');
-}
 function switchModel(m) { currentModelSetting = m; localStorage.setItem('horizen_model', m); if (m === 'auto') showToast('Auto-Fallback Enabled', 'success'); else showToast('Model: ' + (SHORT_NAMES[m] || m), 'success'); }
 
 function toggleBrowser() { if (runnerOpen) closeRunner(); browserOpen = !browserOpen; document.getElementById('browserPanel').classList.toggle('open', browserOpen); document.getElementById('browserBtn').classList.toggle('active', browserOpen); }
@@ -597,8 +570,6 @@ function initApp() {
   if (!loadPersisted()) newChat(); else { renderChatList(); renderMessages(); }
   const savedModel = localStorage.getItem('horizen_model');
   if (savedModel) { currentModelSetting = savedModel; document.getElementById('modelSelect').value = savedModel; }
-  const savedMode = localStorage.getItem('horizen_mode');
-  if (savedMode === 'deep' || savedMode === 'instant') setMode(savedMode, true);
   const savedAutoRun = localStorage.getItem('horizen_autorun');
   if (savedAutoRun !== null) document.getElementById('autoRunToggle').checked = savedAutoRun === '1';
   document.getElementById('userInput').focus();
@@ -615,7 +586,7 @@ function renderChatList() {
 function renderMessages() {
   const container = document.getElementById('messagesContainer'); const chat = chats[activeChatId];
   if (!chat || !chat.messages.length) {
-    container.innerHTML = `<div class="welcome-screen"><div class="welcome-logo">HorizenAI</div><div class="welcome-sub">Streaming AI with vision, voice, and deep thinking. Attach images, dictate prompts, or switch to Deep Think to watch it reason.</div><div class="feature-chips"><div class="feature-chip"><i class="fas fa-bolt"></i> Instant</div><div class="feature-chip"><i class="fas fa-brain"></i> Deep Think</div><div class="feature-chip"><i class="fas fa-image"></i> Image Uploads</div><div class="feature-chip"><i class="fas fa-microphone"></i> Voice</div><div class="feature-chip"><i class="fas fa-image"></i> Pexels</div><div class="feature-chip"><i class="fas fa-code"></i> Auto Runner</div></div></div>`; return;
+    container.innerHTML = `<div class="welcome-screen"><div class="welcome-logo">HorizenAI</div><div class="welcome-sub">Streaming AI with vision and voice. Attach images, dictate prompts, or just ask anything.</div><div class="feature-chips"><div class="feature-chip"><i class="fas fa-bolt"></i> Auto-Fallback</div><div class="feature-chip"><i class="fas fa-image"></i> Image Uploads</div><div class="feature-chip"><i class="fas fa-microphone"></i> Voice Input</div><div class="feature-chip"><i class="fas fa-image"></i> Pexels</div><div class="feature-chip"><i class="fas fa-code"></i> Auto Runner</div><div class="feature-chip"><i class="fas fa-globe"></i> Browser Panel</div></div></div>`; return;
   }
   container.innerHTML = chat.messages.map((m, idx) => {
     if (m.role === 'user') {
@@ -630,11 +601,9 @@ function renderMessages() {
 }
 
 function renderAssistantContent(msg) {
-  let html = '';
-  if (msg.thinking) html += `<details class="think-block"><summary><i class="fas fa-brain"></i> Thinking</summary><div class="think-body">${escapeHtml(msg.thinking)}</div></details>`;
-  html += renderMarkdown(msg.content);
+  if (msg.streaming) return `<span class="streaming-cursor">${escapeHtml(msg.content)}</span>`;
+  let html = renderMarkdown(msg.content);
   if (msg.images && msg.images.length) { html += '<div class="pexels-grid">'; msg.images.forEach(img => { html += `<div class="pexels-img" onclick="openLightbox('${img.src.large}')"><img src="${img.src.medium}" alt="${escapeHtml(img.alt || '')}" loading="lazy"><div class="img-overlay"><i class="fas fa-expand"></i> View</div></div>`; }); html += '</div>'; }
-  if (msg.streaming) html = (msg.thinking ? html : '') + `<span class="streaming-cursor">${escapeHtml(msg.content)}</span>`;
   return html;
 }
 
@@ -678,11 +647,7 @@ function exportChat() {
   let md = `# ${chat.title}\n\n`;
   chat.messages.forEach(m => {
     if (m.role === 'user') { md += `## 🧑 User\n\n${m.content}\n\n`; if (m.images && m.images.length) md += `_(attached ${m.images.length} image(s))_\n\n`; }
-    else {
-      if (m.thinking) md += `> **Thinking:** ${m.thinking.trim().replace(/\n/g, '\n> ')}\n\n`;
-      md += `## 🤖 HorizenAI\n\n${m.content}\n\n`;
-      if (m.images && m.images.length) md += `_(showed ${m.images.length} image(s))_\n\n`;
-    }
+    else { md += `## 🤖 HorizenAI\n\n${m.content}\n\n`; if (m.images && m.images.length) md += `_(showed ${m.images.length} image(s))_\n\n`; }
   });
   const blob = new Blob([md], { type: 'text/markdown' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -777,9 +742,9 @@ async function sendMessage() {
 }
 
 async function runAssistantTurn(chat, sourceMsg) {
-  const aMsg = { role: 'assistant', content: '', thinking: '', streaming: true, images: [] };
+  const aMsg = { role: 'assistant', content: '', streaming: true, images: [] };
   chat.messages.push(aMsg); renderMessages(); isStreaming = true; updateSendButton();
-  let full = '', think = '', aborted = false;
+  let full = '', aborted = false;
   abortCtrl = new AbortController();
   const hasImages = !!(sourceMsg.images && sourceMsg.images.length);
   const isFirstUserMsg = chat.messages.filter(m => m.role === 'user').length === 1;
@@ -790,12 +755,9 @@ async function runAssistantTurn(chat, sourceMsg) {
 
     let modelsToTry = MODEL_FALLBACKS;
     if (currentModelSetting !== 'auto') modelsToTry = [currentModelSetting, ...MODEL_FALLBACKS.filter(m => m !== currentModelSetting)];
-    else if (currentMode === 'deep' && !hasImages) modelsToTry = ['HorizenAPI-708b', ...MODEL_FALLBACKS.filter(m => m !== 'HorizenAPI-708b')];
-    else if (currentMode === 'instant') modelsToTry = ['HorizenAPI-Scout', ...MODEL_FALLBACKS.filter(m => m !== 'HorizenAPI-Scout')];
     if (hasImages) {
       const vision = modelsToTry.filter(m => VISION_MODELS.includes(MODEL_ALIASES[m] || m));
       if (vision.length < modelsToTry.length) showToast('Selected model can\'t see images — switched to a vision model', 'warning');
-      else if (currentMode === 'deep') showToast('Deep Think unavailable with images — using vision model', 'warning');
       modelsToTry = vision.length ? vision : ['HorizenAPI-Scout', 'HorizenAPI-Maverick'];
     }
 
@@ -805,9 +767,7 @@ async function runAssistantTurn(chat, sourceMsg) {
       try {
         document.getElementById('activeModelLabel').innerText = `Trying ${SHORT_NAMES[model] || model}...`;
         const resolvedModel = MODEL_ALIASES[model] || model;
-        const body = { model: resolvedModel, messages: [{ role: 'system', content: sys }, ...history], stream: true, temperature: 0.7, max_tokens: 4096 };
-        if (currentMode === 'deep' && REASONING_MODELS.has(resolvedModel)) { body.reasoning_effort = 'high'; body.reasoning_format = 'parsed'; body.max_tokens = 8192; }
-        const res = await fetch(GROQ_URL, { method: 'POST', headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: abortCtrl.signal });
+        const res = await fetch(GROQ_URL, { method: 'POST', headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: resolvedModel, messages: [{ role: 'system', content: sys }, ...history], stream: true, temperature: 0.7, max_tokens: 4096 }), signal: abortCtrl.signal });
         if (!res.ok) { if (res.status === 429 || res.status >= 500) { showToast(`${SHORT_NAMES[model] || model} down/limited. Switching...`, 'warning'); continue; } const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `API ${res.status}`); }
         document.getElementById('activeModelLabel').innerText = SHORT_NAMES[model] || model;
         const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
@@ -818,9 +778,8 @@ async function runAssistantTurn(chat, sourceMsg) {
             const t = line.trim(); if (!t || !t.startsWith('data: ')) continue;
             const d = t.slice(6); if (d === '[DONE]') continue;
             try {
-              const j = JSON.parse(d); const delta = j.choices?.[0]?.delta || {};
-              if (delta.reasoning) { think += delta.reasoning; aMsg.thinking = think; updateStreamingMessage(aMsg); }
-              if (delta.content) { full += delta.content; aMsg.content = full; updateStreamingMessage(aMsg); }
+              const j = JSON.parse(d); const delta = j.choices?.[0]?.delta?.content;
+              if (delta) { full += delta; aMsg.content = full; updateStreamingMessage(aMsg); }
             } catch (e) { }
           }
         }
@@ -873,10 +832,7 @@ function updateStreamingMessage(msg) {
   if (!last) return;
   const b = last.querySelector('.msg-bubble');
   if (!b) return;
-  let html = '';
-  if (msg.thinking) html += `<details class="think-block" ${msg.content ? '' : 'open'}><summary><i class="fas fa-brain"></i> Thinking…</summary><div class="think-body">${escapeHtml(msg.thinking)}</div></details>`;
-  html += `<span class="streaming-cursor">${renderMarkdown(msg.content)}</span>`;
-  b.innerHTML = html;
+  b.innerHTML = `<span class="streaming-cursor">${renderMarkdown(msg.content)}</span>`;
   b.querySelectorAll('pre code').forEach(bl => { if (!bl.classList.contains('hljs')) hljs.highlightElement(bl); });
   c.scrollTop = c.scrollHeight;
 }
